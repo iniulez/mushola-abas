@@ -35,7 +35,7 @@ export default function App() {
       if (inputBaru.jamMulai < j.jamSelesai && inputBaru.jamSelesai > j.jamMulai) {
         return {
           bentrok: true,
-          pesan: `Mohon maaf, slot waktu telah terisi oleh "${j.kegiatan}" (${j.jamMulai}-${j.jamSelesai} WIB).`
+          pesan: `Slot waktu bertumpuk dengan "${j.kegiatan}" (${j.jamMulai}-${j.jamSelesai}).`
         };
       }
     }
@@ -64,7 +64,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      alert("Pengajuan berhasil dikirim ke database DKM!");
+      alert("Pengajuan berhasil dikirim!");
       setShowForm(false);
       window.location.reload(); 
     } catch (error) {
@@ -76,38 +76,38 @@ export default function App() {
     <div className="min-h-screen bg-abasLight font-sans text-abasDark p-4 md:p-8">
       <header className="max-w-3xl mx-auto text-center my-8">
         <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight mb-3">Mushola ABAS</h1>
-        <p className="text-xs md:text-sm tracking-[0.2em] text-gray-500 uppercase font-medium">
-          Abu Bakar Ash Shiddiq — Portal Jadwal & Booking Kegiatan
-        </p>
+        <p className="text-xs md:text-sm tracking-[0.2em] text-gray-500 uppercase font-medium">Portal Jadwal & Booking Kegiatan</p>
         <div className="w-16 h-[2px] bg-abasGold mx-auto mt-5"></div>
       </header>
 
       <div className="max-w-3xl mx-auto mb-8 flex justify-between items-center">
         <h2 className="font-serif text-xl font-semibold">Daftar Agenda</h2>
-        <button 
-          onClick={() => setShowForm(true)}
-          className="bg-abasDark text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-abasGold transition-colors duration-300 shadow-sm"
-        >
-          + Ajukan Booking Ruangan
+        <button onClick={() => setShowForm(true)} className="bg-abasDark text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-abasGold transition-colors">
+          + Ajukan Booking
         </button>
       </div>
 
       <main className="max-w-3xl mx-auto">
         {loading ? (
-          <div className="text-center py-12 text-gray-400 font-serif italic">Memuat jadwal mushola...</div>
+          <div className="text-center py-12 text-gray-400 font-serif italic">Memuat jadwal...</div>
         ) : (
           <div className="space-y-3">
-            {jadwal.filter(item => item.status !== 'Rejected').map((item) => (
-              <div key={item.id} onClick={() => setSelectedEvent(item)} className="p-5 rounded-lg border-l-4 border-abasGold bg-white border-y border-r border-gray-100 shadow-sm hover:shadow-md cursor-pointer">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-abasDark">{item.kegiatan}</h3>
-                    <p className="text-sm text-gray-500">{item.tanggal} | {item.jamMulai} - {item.jamSelesai} WIB</p>
+            {jadwal.filter(item => item.status !== 'Rejected').map((item) => {
+              const tanggalCantik = new Date(item.tanggal).toLocaleDateString('id-ID', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+              });
+              return (
+                <div key={item.id} onClick={() => setSelectedEvent(item)} className="p-5 rounded-lg border-l-4 border-abasGold bg-white border-y border-r border-gray-100 shadow-sm hover:shadow-md cursor-pointer">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-serif font-bold text-lg text-abasDark">{item.kegiatan}</h3>
+                      <p className="text-sm text-gray-500">📅 {tanggalCantik} | ⏰ {item.jamMulai} - {item.jamSelesai} WIB</p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full font-semibold bg-[#ede6da] text-abasDark">{item.status}</span>
                   </div>
-                  <span className="text-xs px-3 py-1 rounded-full font-semibold bg-[#ede6da] text-abasDark">{item.status}</span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
