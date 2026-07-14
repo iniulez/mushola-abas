@@ -39,7 +39,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-abasLight font-sans text-abasDark p-4 md:p-8">
       <header className="max-w-3xl mx-auto text-center my-8">
-        <h1 className="font-serif text-4xl font-bold mb-3">Mushola ABAS</h1>
+        <h1 className="font-serif text-4xl font-bold mb-3">Mushola Abu Bakar Ash Shiddiq <br>Cluster Bambu Ori </br> <br>Taman Yasmin Sektor 7</br> <br>Bogor Barat</br></h1>
         <p className="text-sm text-gray-500 uppercase tracking-widest">Portal Jadwal & Booking Kegiatan</p>
         <div className="w-16 h-[2px] bg-abasGold mx-auto mt-5"></div>
       </header>
