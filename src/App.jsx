@@ -49,22 +49,32 @@ export default function App() {
   };
 
   // 3. Handle Submit Form Booking
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setPesanError('');
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setPesanError('');
 
-    // Cek apakah jam selesai lebih besar dari jam mulai
-    if (formData.jamSelesai <= formData.jamMulai) {
-      setPesanError('Jam selesai harus lebih akhir daripada jam mulai.');
-      return;
-    }
+  const cek = periksaBentrok(formData);
+  if (cek.bentrok) {
+    setPesanError(cek.pesan);
+    return;
+  }
 
-    // Jalankan sistem penjaga (Anti-Bentrok)
-    const cek = periksaBentrok(formData);
-    if (cek.bentrok) {
-      setPesanError(cek.pesan);
-      return; // Hentikan proses jika bentrok
-    }
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Penting untuk bypass CORS Google Apps Script
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    
+    alert("Pengajuan berhasil dikirim ke database DKM!");
+    setShowForm(false);
+    // Optional: Refresh data kalender
+    window.location.reload(); 
+  } catch (error) {
+    alert("Terjadi kesalahan, coba lagi nanti.");
+  }
+};
 
     // Jika aman, kirim data ke Google Sheets (bisa via POST/GET parameter ke GAS)
     alert("Pengajuan berhasil dikirim! Menunggu persetujuan Ketua DKM.");
