@@ -93,6 +93,7 @@ export default function App() {
   // Mempersiapkan data untuk Calendar View (hanya yang Approved)
  // Mempersiapkan data untuk Calendar View dengan filter yang lebih aman
   // Mempersiapkan data untuk Calendar View dengan pemotongan string langsung (aman dari zona waktu)
+  // Mempersiapkan data untuk Calendar View dengan pembersihan ISO super aman
   const calendarEvents = jadwal
     .filter(item => {
       if (!item.status) return false;
@@ -103,22 +104,19 @@ export default function App() {
       const jamMulaiClean = formatJam(item.jamMulai);
       const jamSelesaiClean = formatJam(item.jamSelesai);
       
-      // --- PERBAIKAN TOTAL DI SINI ---
-      let tanggalFormatISO = '';
+      // --- LOGIKA UTAMA: PARSING STANDARISASI TANGGAL ---
+      let tanggalFormatISO = "";
+      const dateObj = new Date(item.tanggal);
       
-      // Jika format tanggal berupa ISO panjang (ada huruf T atau spasi)
-      if (item.tanggal.includes('T')) {
-        tanggalFormatISO = item.tanggal.split('T')[0]; // Ambil bagian YYYY-MM-DD saja
-      } else if (item.tanggal.includes(' ')) {
-        // Jika formatnya seperti "Fri Jul 17 2026..."
-        const dateObj = new Date(item.tanggal);
+      if (!isNaN(dateObj.getTime())) {
+        // Ekstraksi waktu lokal murni tanpa terpengaruh pergeseran zona waktu (GMT/UTC offset)
         const tahun = dateObj.getFullYear();
         const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
         const hari = String(dateObj.getDate()).padStart(2, '0');
         tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
       } else {
-        // Jika dari sananya sudah bersih "2026-07-17"
-        tanggalFormatISO = item.tanggal.toString().trim();
+        // Jika teks berupa string mentah, bersihkan sisa karakter non-digit di luar format YYYY-MM-DD
+        tanggalFormatISO = item.tanggal.toString().split('T')[0].trim();
       }
 
       return {
