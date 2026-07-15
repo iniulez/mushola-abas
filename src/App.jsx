@@ -91,16 +91,25 @@ export default function App() {
   };
 
   // Mempersiapkan data untuk Calendar View (hanya yang Approved)
-  const calendarEvents = jadwal
+ const calendarEvents = jadwal
     .filter(item => item.status === 'Approved')
     .map(item => {
       const jamMulaiClean = formatJam(item.jamMulai);
       const jamSelesaiClean = formatJam(item.jamSelesai);
+      
+      // --- PERBAIKAN DI SINI ---
+      // Memastikan format tanggal dikonversi ke string YYYY-MM-DD yang bersih untuk FullCalendar
+      const dateObj = new Date(item.tanggal);
+      const tahun = dateObj.getFullYear();
+      const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const hari = String(dateObj.getDate()).padStart(2, '0');
+      const tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
+
       return {
         id: item.id,
-        title: `${jamMulaiClean} ${item.kegiatan}`,
-        start: `${item.tanggal}T${jamMulaiClean}:00`,
-        end: `${item.tanggal}T${jamSelesaiClean}:00`,
+        title: item.kegiatan, // Kita pasang judul kegiatannya saja agar rapi
+        start: `${tanggalFormatISO}T${jamMulaiClean}:00`,
+        end: `${tanggalFormatISO}T${jamSelesaiClean}:00`,
         extendedProps: { ...item },
         backgroundColor: '#b3925c',
         borderColor: '#9c7d4c',
