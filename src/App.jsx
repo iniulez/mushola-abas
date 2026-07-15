@@ -91,23 +91,32 @@ export default function App() {
   };
 
   // Mempersiapkan data untuk Calendar View (hanya yang Approved)
- const calendarEvents = jadwal
-    .filter(item => item.status === 'Approved')
+ // Mempersiapkan data untuk Calendar View dengan filter yang lebih aman
+  const calendarEvents = jadwal
+    .filter(item => {
+      if (!item.status) return false;
+      const statusClean = item.status.toString().trim().toLowerCase();
+      // Mengizinkan status berupa 'approved' atau mengandung kata 'terjadwal'
+      return statusClean === 'approved' || statusClean.includes('terjadwal');
+    })
     .map(item => {
       const jamMulaiClean = formatJam(item.jamMulai);
       const jamSelesaiClean = formatJam(item.jamSelesai);
       
-      // --- PERBAIKAN DI SINI ---
-      // Memastikan format tanggal dikonversi ke string YYYY-MM-DD yang bersih untuk FullCalendar
+      // Memastikan konversi tanggal menghasilkan format YYYY-MM-DD yang valid
       const dateObj = new Date(item.tanggal);
-      const tahun = dateObj.getFullYear();
-      const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const hari = String(dateObj.getDate()).padStart(2, '0');
-      const tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
+      let tanggalFormatISO = item.tanggal; // Fallback jika string sudah berupa YYYY-MM-DD
+      
+      if (!isNaN(dateObj.getTime())) {
+        const tahun = dateObj.getFullYear();
+        const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const hari = String(dateObj.getDate()).padStart(2, '0');
+        tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
+      }
 
       return {
         id: item.id,
-        title: item.kegiatan, // Kita pasang judul kegiatannya saja agar rapi
+        title: item.kegiatan,
         start: `${tanggalFormatISO}T${jamMulaiClean}:00`,
         end: `${tanggalFormatISO}T${jamSelesaiClean}:00`,
         extendedProps: { ...item },
