@@ -92,26 +92,33 @@ export default function App() {
 
   // Mempersiapkan data untuk Calendar View (hanya yang Approved)
  // Mempersiapkan data untuk Calendar View dengan filter yang lebih aman
+  // Mempersiapkan data untuk Calendar View dengan pemotongan string langsung (aman dari zona waktu)
   const calendarEvents = jadwal
     .filter(item => {
       if (!item.status) return false;
       const statusClean = item.status.toString().trim().toLowerCase();
-      // Mengizinkan status berupa 'approved' atau mengandung kata 'terjadwal'
       return statusClean === 'approved' || statusClean.includes('terjadwal');
     })
     .map(item => {
       const jamMulaiClean = formatJam(item.jamMulai);
       const jamSelesaiClean = formatJam(item.jamSelesai);
       
-      // Memastikan konversi tanggal menghasilkan format YYYY-MM-DD yang valid
-      const dateObj = new Date(item.tanggal);
-      let tanggalFormatISO = item.tanggal; // Fallback jika string sudah berupa YYYY-MM-DD
+      // --- PERBAIKAN TOTAL DI SINI ---
+      let tanggalFormatISO = '';
       
-      if (!isNaN(dateObj.getTime())) {
+      // Jika format tanggal berupa ISO panjang (ada huruf T atau spasi)
+      if (item.tanggal.includes('T')) {
+        tanggalFormatISO = item.tanggal.split('T')[0]; // Ambil bagian YYYY-MM-DD saja
+      } else if (item.tanggal.includes(' ')) {
+        // Jika formatnya seperti "Fri Jul 17 2026..."
+        const dateObj = new Date(item.tanggal);
         const tahun = dateObj.getFullYear();
         const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
         const hari = String(dateObj.getDate()).padStart(2, '0');
         tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
+      } else {
+        // Jika dari sananya sudah bersih "2026-07-17"
+        tanggalFormatISO = item.tanggal.toString().trim();
       }
 
       return {
