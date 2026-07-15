@@ -151,7 +151,7 @@ export default function App() {
       `}</style>
 
       <header className="max-w-4xl mx-auto text-center my-8">
-        <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight mb-3">Mushola ABAS</h1>
+        <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight mb-3">Mushola Abu Bakar Ash-Shiddiq, Cluster Bambu Ori, TM Yasmin VII</h1>
         <p className="text-xs md:text-sm tracking-[0.2em] text-gray-500 uppercase font-medium">Portal Jadwal & Booking Kegiatan</p>
         <div className="w-16 h-[2px] bg-abasGold mx-auto mt-5"></div>
       </header>
