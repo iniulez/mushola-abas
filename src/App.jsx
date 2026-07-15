@@ -10,7 +10,6 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showForm, setShowForm] = useState(false);
   
-  // State form sudah menyertakan whatsapp
   const [formData, setFormData] = useState({
     pic: '', whatsapp: '', kegiatan: '', tanggal: '', jamMulai: '', jamSelesai: ''
   });
@@ -32,14 +31,26 @@ export default function App() {
       });
   }, []);
 
-  const formatJam = (timeString) => {
+  // 1. Format jam untuk tampilan di daftar (bahasa Indonesia)
+  const formatJamDisplay = (timeString) => {
     if (!timeString) return '';
     const date = new Date(timeString);
     if (isNaN(date.getTime())) {
-      // Jika format dari sheet sudah string "13:00", langsung kembalikan
       return timeString.toString().slice(0, 5);
     }
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  // 2. Format jam KHUSUS FullCalendar (WAJIB pakai titik dua / standar en-GB)
+  const formatJamISO = (timeString) => {
+    if (!timeString) return '00:00';
+    const date = new Date(timeString);
+    if (!isNaN(date.getTime())) {
+      // Menggunakan en-GB agar dijamin menghasilkan format HH:MM (pakai titik dua)
+      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+    // Jika string mentah seperti "19.30", ubah titik menjadi titik dua secara paksa
+    return timeString.toString().slice(0, 5).replace('.', ':');
   };
 
   const periksaBentrok = (inputBaru) => {
@@ -47,13 +58,13 @@ export default function App() {
       j.tanggal === inputBaru.tanggal && j.status !== 'Rejected'
     );
     for (let j of jadwalHariSama) {
-      const eksisMulai = formatJam(j.jamMulai);
-      const eksisSelesai = formatJam(j.jamSelesai);
+      const eksisMulai = formatJamISO(j.jamMulai);
+      const eksisSelesai = formatJamISO(j.jamSelesai);
       
       if (inputBaru.jamMulai < eksisSelesai && inputBaru.jamSelesai > eksisMulai) {
         return {
           bentrok: true,
-          pesan: `Slot waktu bertumpuk dengan "${j.kegiatan}" (${eksisMulai}-${eksisSelesai} WIB).`
+          pesan: `Slot waktu bertumpuk dengan "${j.kegiatan}" (${formatJamDisplay(j.jamMulai)}-${formatJamDisplay(j.jamSelesai)} WIB).`
         };
       }
     }
@@ -90,10 +101,7 @@ export default function App() {
     }
   };
 
-  // Mempersiapkan data untuk Calendar View (hanya yang Approved)
- // Mempersiapkan data untuk Calendar View dengan filter yang lebih aman
-  // Mempersiapkan data untuk Calendar View dengan pemotongan string langsung (aman dari zona waktu)
-  // Mempersiapkan data untuk Calendar View dengan pembersihan ISO super aman
+  // Mempersiapkan data untuk Calendar View dengan pembersihan waktu ISO yang sempurna
   const calendarEvents = jadwal
     .filter(item => {
       if (!item.status) return false;
@@ -101,21 +109,19 @@ export default function App() {
       return statusClean === 'approved' || statusClean.includes('terjadwal');
     })
     .map(item => {
-      const jamMulaiClean = formatJam(item.jamMulai);
-      const jamSelesaiClean = formatJam(item.jamSelesai);
+      // Menggunakan fungsi formatJamISO agar dijamin HH:MM (tanpa titik)
+      const jamMulaiClean = formatJamISO(item.jamMulai);
+      const jamSelesaiClean = formatJamISO(item.jamSelesai);
       
-      // --- LOGIKA UTAMA: PARSING STANDARISASI TANGGAL ---
       let tanggalFormatISO = "";
       const dateObj = new Date(item.tanggal);
       
       if (!isNaN(dateObj.getTime())) {
-        // Ekstraksi waktu lokal murni tanpa terpengaruh pergeseran zona waktu (GMT/UTC offset)
         const tahun = dateObj.getFullYear();
         const bulan = String(dateObj.getMonth() + 1).padStart(2, '0');
         const hari = String(dateObj.getDate()).padStart(2, '0');
         tanggalFormatISO = `${tahun}-${bulan}-${hari}`;
       } else {
-        // Jika teks berupa string mentah, bersihkan sisa karakter non-digit di luar format YYYY-MM-DD
         tanggalFormatISO = item.tanggal.toString().split('T')[0].trim();
       }
 
@@ -133,7 +139,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-abasLight font-sans text-abasDark p-4 md:p-8">
-      {/* Styling Kustom FullCalendar agar pas dengan tema ABAS */}
       <style>{`
         .fc { font-family: 'Plus Jakarta Sans', sans-serif; }
         .fc .fc-toolbar-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: bold; color: #1a1918; }
@@ -151,7 +156,6 @@ export default function App() {
         <div className="w-16 h-[2px] bg-abasGold mx-auto mt-5"></div>
       </header>
 
-      {/* Tombol Action */}
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center">
         <h2 className="font-serif text-2xl font-semibold">Kalender Kegiatan</h2>
         <button 
@@ -163,7 +167,6 @@ export default function App() {
       </div>
 
       <main className="max-w-4xl mx-auto space-y-8">
-        {/* VIEW 1: KALENDER PERBULAN */}
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
           {loading ? (
             <div className="text-center py-12 text-gray-400 font-serif italic">Memuat kalender mushola...</div>
@@ -187,7 +190,6 @@ export default function App() {
           )}
         </div>
 
-        {/* VIEW 2: DAFTAR AGENDA (LIST) */}
         <div>
           <h2 className="font-serif text-xl font-semibold mb-4 border-b pb-2">Daftar Agenda & Status Pengajuan</h2>
           {loading ? (
@@ -201,8 +203,8 @@ export default function App() {
                 const tanggalCantik = new Date(item.tanggal).toLocaleDateString('id-ID', { 
                   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
                 });
-                const jamMulaiCantik = formatJam(item.jamMulai);
-                const jamSelesaiCantik = formatJam(item.jamSelesai);
+                const jamMulaiCantik = formatJamDisplay(item.jamMulai);
+                const jamSelesaiCantik = formatJamDisplay(item.jamSelesai);
                 
                 return (
                   <div 
@@ -235,7 +237,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* MODAL 1: DETAIL KEGIATAN */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-gray-200 max-w-md w-full rounded-xl p-6 shadow-2xl animate-fade-in">
@@ -246,7 +247,7 @@ export default function App() {
               <div className="flex justify-between"><span className="text-gray-400">PIC / Pengaju:</span> <span className="font-medium">{selectedEvent.pic}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Kontak WA:</span> <span className="font-medium">{selectedEvent.whatsapp || '-'}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Tanggal:</span> <span className="font-medium">{selectedEvent.tanggal}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">Waktu:</span> <span className="font-medium">{formatJam(selectedEvent.jamMulai)} - {formatJam(selectedEvent.jamSelesai)} WIB</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Waktu:</span> <span className="font-medium">{formatJamDisplay(selectedEvent.jamMulai)} - {formatJamDisplay(selectedEvent.jamSelesai)} WIB</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Status:</span> <span className="font-semibold text-abasGold">{selectedEvent.status}</span></div>
             </div>
 
@@ -260,7 +261,6 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL 2: FORM BOOKING (SUDAH ADA INPUT NO WHATSAPP) */}
       {showForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-gray-200 max-w-md w-full rounded-xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -278,7 +278,6 @@ export default function App() {
                 <input type="text" placeholder="Nama Anda" required className="w-full p-2.5 border rounded-md focus:outline-none focus:border-abasGold" onChange={e => setFormData({...formData, pic: e.target.value})} />
               </div>
 
-              {/* INPUT WHATSAPP YANG BARU DITAMBAHKAN */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">NOMOR WHATSAPP</label>
                 <input type="tel" placeholder="Contoh: 08123456789" required className="w-full p-2.5 border rounded-md focus:outline-none focus:border-abasGold" onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
